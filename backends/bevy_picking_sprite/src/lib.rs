@@ -32,6 +32,7 @@ pub fn sprite_picking(
     sprite_query: Query<(
         Entity,
         &Sprite,
+        &Transform,
         &Handle<Image>,
         &GlobalTransform,
         &ComputedVisibility,
@@ -41,8 +42,8 @@ pub fn sprite_picking(
 ) {
     let mut sorted_sprites: Vec<_> = sprite_query.iter().collect();
     sorted_sprites.sort_by(|a, b| {
-        (b.3.translation().z)
-            .partial_cmp(&a.3.translation().z)
+        (b.4.translation().z)
+            .partial_cmp(&a.4.translation().z)
             .unwrap_or(Ordering::Equal)
     });
 
@@ -71,14 +72,14 @@ pub fn sprite_picking(
             .iter()
             .copied()
             .filter_map(
-                |(entity, sprite, image, sprite_transform, visibility, sprite_focus)| {
+                |(entity, sprite, transform, image, sprite_transform, visibility, sprite_focus)| {
                     if blocked || !visibility.is_visible() {
                         return None;
                     }
                     let position = sprite_transform.translation();
                     let extents = sprite
                         .custom_size
-                        .or_else(|| images.get(image).map(|f| f.size()))?;
+                        .or_else(|| images.get(image).map(|f| f.size()))? * transform.scale.truncate();
                     let center = position.truncate() - (sprite.anchor.as_vec() * extents);
                     let rect = Rect::from_center_half_size(center, extents / 2.0);
 
